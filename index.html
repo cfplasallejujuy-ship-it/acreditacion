@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Librería oficial para escaneo QR en vivo -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background-color: #f8f9fa; margin: 0; }
+    h2 { color: #333; font-size: 20px; }
+    /* Contenedor del visor de la cámara */
+    #reader { width: 100%; max-width: 320px; margin: 15px auto; border-radius: 8px; overflow: hidden; background: #000; }
+    #result { margin-top: 15px; font-size: 16px; font-weight: bold; padding: 12px; border-radius: 6px; }
+    select { font-size: 16px; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; width: 90%; max-width: 300px; }
+    .btn { background-color: #28a745; color: white; border: none; padding: 14px 20px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 90%; max-width: 300px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Acreditación de Asistencia</h2>
+  <select id="diaSelect">
+    <option value="Día 1">Día 1 (10 Nov)</option>
+    <option value="Día 2">Día 2 (11 Nov)</option>
+  </select>
+
+  <br>
+  <!-- Botón para encender el visor de escaneo -->
+  <button class="btn" id="btnCamara" onclick="iniciarVisorQr()">📷 Activar Escáner QR</button>
+
+  <!-- Acá se dibuja automáticamente la cámara con el cuadro de escaneo -->
+  <div id="reader"></div>
+  <div id="result">Presioná el botón para encender el visor...</div>
+
+  <script>
+    let html5QrCode = null;
+
+    function iniciarVisorQr() {
+      document.getElementById('btnCamara').style.display = 'none';
+      document.getElementById('result').innerText = "Encendiendo cámara y visor...";
+      document.getElementById('result').style.backgroundColor = "#fff3cd";
+
+      // Inicializa el lector en el div "reader"
+      html5QrCode = new Html5Qrcode("reader");
+      
+      const config = { 
+        fps: 15, 
+        qrbox: { width: 220, height: 220 }, // Tamaño del cuadro guía en pantalla
+        aspectRatio: 1.0
+      };
+      
+      // Intenta abrir la cámara trasera obligatoriamente
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        onScanSuccess
+      ).catch(err => {
+        // Si la cámara trasera falla, intenta con cualquier otra disponible
+        html5QrCode.start(
+          { facingMode: "user" }, 
+          config, 
+          onScanSuccess
+        ).catch(innerErr => {
+          document.getElementById('result').innerText = "❌ No se pudo iniciar el visor. Verificá los permisos del navegador.";
+          document.getElementById('result').style.backgroundColor = "#f8d7da";
+          document.getElementById('btnCamara').style.display = 'inline-block';
+        });
+      });
+    }
+
+    let escaneando = false;
+
+    function onScanSuccess(decodedText) {
+      if (escaneando) return; // Evita lecturas múltiples seguidas de la misma persona
+      escaneando = true;
+
+      document.getElementById('result').innerText = "Procesando DNI: " + decodedText + "...";
+      document.getElementById('result').style.backgroundColor = "#fff3cd";
+      
+      var dia = document.getElementById('diaSelect').value;
+      
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          document.getElementById('result').innerText = msg;
+          if (msg.includes("✅")) {
+            document.getElementById('result').style.backgroundColor = "#d4edda";
+          } else {
+            document.getElementById('result').style.backgroundColor = "#f8d7da";
+          }
+          
+          // Libera el lector para el próximo asistente después de 1.5 segundos
+          setTimeout(() => {
+            escaneando = false;
+            document.getElementById('result').innerText = "Listo para el próximo QR...";
+          }, 1500);
+        })
+        .registrarAsistencia(decodedText, dia);
+    }
+  </script>
+</body>
+</html>
