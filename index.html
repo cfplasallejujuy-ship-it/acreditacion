@@ -38,22 +38,19 @@
       document.getElementById('result').innerText = "Encendiendo cámara y visor...";
       document.getElementById('result').style.backgroundColor = "#fff3cd";
 
-      // Inicializa el lector en el div "reader"
       html5QrCode = new Html5Qrcode("reader");
       
       const config = { 
         fps: 15, 
-        qrbox: { width: 220, height: 220 }, // Tamaño del cuadro guía en pantalla
+        qrbox: { width: 220, height: 220 }, 
         aspectRatio: 1.0
       };
       
-      // Intenta abrir la cámara trasera obligatoriamente
       html5QrCode.start(
         { facingMode: "environment" }, 
         config, 
         onScanSuccess
       ).catch(err => {
-        // Si la cámara trasera falla, intenta con cualquier otra disponible
         html5QrCode.start(
           { facingMode: "user" }, 
           config, 
@@ -69,31 +66,43 @@
     let escaneando = false;
 
     function onScanSuccess(decodedText) {
-      if (escaneando) return; // Evita lecturas múltiples seguidas de la misma persona
+      if (escaneando) return;
       escaneando = true;
 
-      document.getElementById('result').innerText = "Procesando DNI: " + decodedText + "...";
+      document.getElementById('result').innerText = "Guardando DNI: " + decodedText + " en la planilla...";
       document.getElementById('result').style.backgroundColor = "#fff3cd";
       
       var dia = document.getElementById('diaSelect').value;
       
-      google.script.run
-        .withSuccessHandler(function(msg) {
-          document.getElementById('result').innerText = msg;
-          if (msg.includes("✅")) {
-            document.getElementById('result').style.backgroundColor = "#d4edda";
-          } else {
-            document.getElementById('result').style.backgroundColor = "#f8d7da";
-          }
-          
-          // Libera el lector para el próximo asistente después de 1.5 segundos
-          setTimeout(() => {
-            escaneando = false;
-            document.getElementById('result').innerText = "Listo para el próximo QR...";
-          }, 1500);
-        })
-        .registrarAsistencia(decodedText, dia);
+      // ⚠️ REEMPLAZÁ ESTA URL CON TU LINK REAL DE APPS SCRIPT QUE TERMINA EN /exec
+      var urlAppsScript = "https://script.google.com/macros/s/AKfycbwvUwpfeuitnmkdnDMyXDr3Defr3j_q6qfVMs-6SPvQH88vLVDlf9IyX3naovgQzA6K/exec";
+
+      fetch(urlAppsScript, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ dni: decodedText, dia: dia })
+      })
+      .then(response => {
+        document.getElementById('result').innerText = "✅ ¡Asistencia registrada para el DNI: " + decodedText + "!";
+        document.getElementById('result').style.backgroundColor = "#d4edda";
+        document.getElementById('result').style.color = "#155724";
+        
+        setTimeout(() => {
+          escaneando = false;
+          document.getElementById('result').innerText = "Listo para el próximo QR...";
+        }, 2000);
+      })
+      .catch(error => {
+        document.getElementById('result').innerText = "❌ Error al conectar con la planilla.";
+        document.getElementById('result').style.backgroundColor = "#f8d7da";
+        document.getElementById('result').style.color = "#721c24";
+        escaneando = false;
+      });
     }
   </script>
 </body>
+</html>
 </html>
