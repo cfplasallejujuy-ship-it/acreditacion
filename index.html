@@ -3,12 +3,10 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Librería oficial para escaneo QR en vivo -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background-color: #f8f9fa; margin: 0; }
     h2 { color: #333; font-size: 20px; }
-    /* Contenedor del visor de la cámara */
     #reader { width: 100%; max-width: 320px; margin: 15px auto; border-radius: 8px; overflow: hidden; background: #000; }
     #result { margin-top: 15px; font-size: 16px; font-weight: bold; padding: 12px; border-radius: 6px; }
     select { font-size: 16px; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; width: 90%; max-width: 300px; }
@@ -23,10 +21,8 @@
   </select>
 
   <br>
-  <!-- Botón para encender el visor de escaneo -->
   <button class="btn" id="btnCamara" onclick="iniciarVisorQr()">📷 Activar Escáner QR</button>
 
-  <!-- Acá se dibuja automáticamente la cámara con el cuadro de escaneo -->
   <div id="reader"></div>
   <div id="result">Presioná el botón para encender el visor...</div>
 
@@ -40,23 +36,11 @@
 
       html5QrCode = new Html5Qrcode("reader");
       
-      const config = { 
-        fps: 15, 
-        qrbox: { width: 220, height: 220 }, 
-        aspectRatio: 1.0
-      };
+      const config = { fps: 15, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 };
       
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onScanSuccess
-      ).catch(err => {
-        html5QrCode.start(
-          { facingMode: "user" }, 
-          config, 
-          onScanSuccess
-        ).catch(innerErr => {
-          document.getElementById('result').innerText = "❌ No se pudo iniciar el visor. Verificá los permisos del navegador.";
+      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => {
+        html5QrCode.start({ facingMode: "user" }, config, onScanSuccess).catch(innerErr => {
+          document.getElementById('result').innerText = "❌ No se pudo iniciar el visor.";
           document.getElementById('result').style.backgroundColor = "#f8d7da";
           document.getElementById('btnCamara').style.display = 'inline-block';
         });
@@ -73,22 +57,17 @@
       document.getElementById('result').style.backgroundColor = "#fff3cd";
       
       var dia = document.getElementById('diaSelect').value;
-      
-      // Tu URL real de Apps Script que termina en /exec
-      var urlAppsScript = "https://script.google.com/macros/s/AKfycbyW1sU8cLZKx0cVq90RCp18LoaTHD_8pDG9r5cCA8l83ctlygbXGaFNDx8DpwRzGK0q/exec";
-
-      // Usamos URLSearchParams para enviar los datos correctamente desde GitHub Pages
-      var formData = new URLSearchParams();
-      formData.append("dni", decodedText);
-      formData.append("dia", dia);
+      var urlAppsScript = "https://script.google.com/macros/s/AKfycbwtuvDN82BheTfXFTsR7kZYYTNWsZ6FQSwCetheAauzfNh4bDBDOcOnr8Fux-hFeJeP/exec";
 
       fetch(urlAppsScript, {
         method: "POST",
-        body: formData
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni: decodedText, dia: dia })
       })
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('result').innerText = data.message;
+      .then(() => {
+        // Como usamos no-cors asumimos éxito visual inmediato en la pantalla
+        document.getElementById('result').innerText = "✅ ¡Enviado DNI: " + decodedText + "!";
         document.getElementById('result').style.backgroundColor = "#d4edda";
         document.getElementById('result').style.color = "#155724";
         
@@ -98,9 +77,8 @@
         }, 2000);
       })
       .catch(error => {
-        document.getElementById('result').innerText = "❌ Error al conectar con la planilla.";
+        document.getElementById('result').innerText = "❌ Error al enviar.";
         document.getElementById('result').style.backgroundColor = "#f8d7da";
-        document.getElementById('result').style.color = "#721c24";
         escaneando = false;
       });
     }
