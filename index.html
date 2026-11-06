@@ -74,19 +74,21 @@
       
       var dia = document.getElementById('diaSelect').value;
       
-      // ⚠️ REEMPLAZÁ ESTA URL CON TU LINK REAL DE APPS SCRIPT QUE TERMINA EN /exec
-      var urlAppsScript = "https://script.google.com/macros/s/AKfycbyLCEjztipekGO8wEJdx00VWLQ0q3C00GZ1l_7CO8g1KbfAB8dgKSJd7zVdDymhuiM/exec";
+      // Tu URL real de Apps Script que termina en /exec
+      var urlAppsScript = "https://script.google.com/macros/s/AKfycbyW1sU8cLZKx0cVq90RCp18LoaTHD_8pDG9r5cCA8l83ctlygbXGaFNDx8DpwRzGK0q/exec";
+
+      // Usamos URLSearchParams para enviar los datos correctamente desde GitHub Pages
+      var formData = new URLSearchParams();
+      formData.append("dni", decodedText);
+      formData.append("dia", dia);
 
       fetch(urlAppsScript, {
         method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ dni: decodedText, dia: dia })
+        body: formData
       })
-      .then(response => {
-        document.getElementById('result').innerText = "✅ ¡Asistencia registrada para el DNI: " + decodedText + "!";
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('result').innerText = data.message;
         document.getElementById('result').style.backgroundColor = "#d4edda";
         document.getElementById('result').style.color = "#155724";
         
@@ -104,5 +106,4 @@
     }
   </script>
 </body>
-</html>
 </html>
